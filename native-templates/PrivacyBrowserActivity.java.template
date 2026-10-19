@@ -26,12 +26,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import java.io.ByteArrayInputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
+import io.github.edsuns.adfilter.AdFilter;
+import io.github.edsuns.adfilter.Filter;
+import io.github.edsuns.adfilter.FilterViewModel;
 
 public class PrivacyBrowserActivity extends Activity {
     public static final String EXTRA_URL = "piko.browser.url";
@@ -41,18 +39,7 @@ public class PrivacyBrowserActivity extends Activity {
     private static final int MUTED = Color.rgb(173, 164, 193);
     private static final int ACCENT = Color.rgb(190, 162, 255);
 
-    // Curated domain list. This blocks common ad/tracker requests but is not a full EasyList replacement.
-    private static final Set<String> BLOCKED_HOSTS = new HashSet<>(Arrays.asList(
-        "doubleclick.net", "googlesyndication.com", "googleadservices.com",
-        "adservice.google.com", "adnxs.com", "adsrvr.org", "adform.net",
-        "criteo.com", "taboola.com", "outbrain.com", "amazon-adsystem.com",
-        "scorecardresearch.com", "moatads.com", "zedo.com", "serving-sys.com",
-        "adroll.com", "quantserve.com", "bluekai.com", "demdex.net",
-        "smartadserver.com", "casalemedia.com", "popads.net", "popcash.net",
-        "adsterra.com", "exoclick.com", "trafficjunky.net", "mgid.com",
-        "adpushup.com", "adskeeper.co.uk", "revcontent.com"
-    ));
-
+    private AdFilter adFilter;
     private WebView webView;
     private EditText address;
     private ProgressBar progress;
@@ -63,6 +50,8 @@ public class PrivacyBrowserActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+        adFilter = AdFilter.Companion.get(this);
+        ensureDefaultFilters();
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -133,6 +122,7 @@ public class PrivacyBrowserActivity extends Activity {
         cookies.setAcceptThirdPartyCookies(webView, false);
 
         webView.setBackgroundColor(Color.WHITE);
+        adFilter.setupWebView(webView);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -149,19 +139,14 @@ public class PrivacyBrowserActivity extends Activity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                if (isBlocked(uri)) {
-                    return new WebResourceResponse("text/plain", "utf-8", 204,
-                        "Blocked by Piko", Collections.emptyMap(),
-                        new ByteArrayInputStream(new byte[0]));
-                }
-                return super.shouldInterceptRequest(view, request);
+                return adFilter.shouldIntercept(view, request).getResourceResponse();
             }
 
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 address.setText(url);
-                status.setText("Piko request filter enabled");
+                adFilter.performScript(view, url);
+                status.setText("AdblockAndroid filter engine active");
             }
 
             @Override
@@ -202,7 +187,7 @@ public class PrivacyBrowserActivity extends Activity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
 
         status = new TextView(this);
-        status.setText("Piko request filter enabled · not a complete ad blocker");
+        status.setText("AdblockAndroid filter engine · first-run filter download may take a moment");
         status.setTextColor(MUTED);
         status.setTextSize(10);
         status.setPadding(dp(12), dp(7), dp(12), dp(7));
@@ -229,19 +214,25 @@ public class PrivacyBrowserActivity extends Activity {
         }
     }
 
-    private boolean isBlocked(Uri uri) {
-        String scheme = uri.getScheme();
-        String host = uri.getHost();
-        if (scheme == null || host == null ||
-            (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme))) return true;
+    private void ensureDefaultFilters() {
+        FilterViewModel viewModel = adFilter.getViewModel();
+        if (adFilter.getHasInstallation()) return;
 
-        String normalized = host.toLowerCase(Locale.ROOT);
-        for (String blocked : BLOCKED_HOSTS) {
-            if (normalized.equals(blocked) || normalized.endsWith("." + blocked)) return true;
-        }
-        String lowerUrl = uri.toString().toLowerCase(Locale.ROOT);
-        return lowerUrl.contains("/pagead/") || lowerUrl.contains("/adsystem/") ||
-               lowerUrl.contains("/adservice/") || lowerUrl.contains("/advertising/");
+        Filter base = viewModel.addFilter(
+            "AdGuard Base",
+            "https://filters.adtidy.org/extension/chromium/filters/2.txt"
+        );
+        Filter privacy = viewModel.addFilter(
+            "EasyPrivacy Lite",
+            "https://filters.adtidy.org/extension/chromium/filters/118_optimized.txt"
+        );
+        Filter tracking = viewModel.addFilter(
+            "AdGuard Tracking Protection",
+            "https://filters.adtidy.org/extension/chromium/filters/3.txt"
+        );
+        viewModel.download(base.getId());
+        viewModel.download(privacy.getId());
+        viewModel.download(tracking.getId());
     }
 
     private void loadAddress() {
