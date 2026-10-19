@@ -148,4 +148,24 @@ if (!appGradle.includes(adblockDependency)) {
   await writeFile(appGradlePathResolved, appGradle, "utf8");
 }
 
+
+const workManagerDependency = "androidx.work:work-runtime-ktx:2.11.2";
+if (!appGradle.includes(workManagerDependency)) {
+  // AdblockAndroid currently brings WorkManager 2.4.0, which crashes on Android 12+
+  // because its ForceStopRunnable creates a PendingIntent without an explicit mutability flag.
+  // Pin the runtime + KTX artifact to a modern compatible release (API 23+).
+  if (appGradlePathResolved.endsWith(".kts")) {
+    appGradle = appGradle.replace(
+      /dependencies\\s*\\{/,
+      (match) => match + '\\n    implementation("' + workManagerDependency + '")'
+    );
+  } else {
+    appGradle = appGradle.replace(
+      /dependencies\\s*\\{/,
+      (match) => match + "\\n    implementation('" + workManagerDependency + "')"
+    );
+  }
+  await writeFile(appGradlePathResolved, appGradle, "utf8");
+}
+
 console.log("Prepared Piko Beats native browser with the AdblockAndroid filter library.");
