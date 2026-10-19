@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "../../lib/supabase";
 
 export default function AuthPage() {
@@ -22,7 +23,7 @@ export default function AuthPage() {
     try {
       const result = mode === "signin"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined } });
+        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: typeof window !== "undefined" && !Capacitor.isNativePlatform() ? window.location.origin : undefined } });
       if (result.error) throw result.error;
       if (mode === "signin" || result.data?.session) {
         const requested = new URLSearchParams(window.location.search).get("next");
