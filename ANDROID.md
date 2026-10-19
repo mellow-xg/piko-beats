@@ -8,10 +8,10 @@ Piko Beats uses Next.js static export inside Capacitor, with a native Android br
 - The browser route at `/browser` opens a native browser screen through the `PrivacyBrowser` Capacitor plugin.
 - The screen uses Android WebView plus **Edsuns/AdblockAndroid** for EasyList/AdGuard-compatible network filtering, element hiding, and scriptlet rules.
 - Initial filter subscriptions: AdGuard Base, EasyPrivacy Lite, and AdGuard Tracking Protection.
-- The generated Gradle project adds the JitPack repository and `com.github.Edsuns.AdblockAndroid:ad-filter:1.0`.
+- The generated Gradle project adds the JitPack repository and `com.github.Edsuns.AdblockAndroid:ad-filter:master-SNAPSHOT`.
 - Back, refresh, URL entry, HTTPS-only top-level navigation, Android Safe Browsing, and TLS error cancellation are included in the native template.
 
-The upstream AdblockAndroid latest release is old, so the first Android build must confirm that its JitPack artifact resolves and works with the current Android Gradle toolchain. See `THIRD_PARTY_NOTICES.md` and the bundled LGPL-2.1 license. Filter updates are fetched from their source publishers; this is not a complete guarantee of ad removal, and some music websites may block Android WebView playback.
+The upstream AdblockAndroid release is old, so CI must confirm that its JitPack master-SNAPSHOT resolves and works with the current Android Gradle toolchain. The original 1.0 coordinate could not be resolved by CI. See `THIRD_PARTY_NOTICES.md` and the bundled LGPL-2.1 license. Filter updates are fetched from their source publishers; this is not a complete guarantee of ad removal, and some music websites may block Android WebView playback.
 
 ## Why not embed Bare Browser directly?
 
