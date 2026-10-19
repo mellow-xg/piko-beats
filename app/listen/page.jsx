@@ -62,7 +62,7 @@ export default function ListenPage() {
     <section className="music-tool-content">
       <p className="eyebrow">LISTEN ONLINE</p>
       <h1>Bring your music in.</h1>
-      <p className="muted tool-intro">Paste a music or playlist link and play it through the provider's official embedded player, right here in Piko Beats.</p>
+      <p className="muted tool-intro">Paste a music or playlist link and play it through the provider&apos;s official embedded player, right here in Piko Beats.</p>
       <form className="music-link-form" onSubmit={loadLink}>
         <label htmlFor="music-url">Music link</label>
         <div className="music-link-row"><input id="music-url" type="url" inputMode="url" placeholder="https://music.youtube.com/playlist?list=…" value={input} onChange={(event) => setInput(event.target.value)} required /><button className="primary-button" type="submit">Load player <span>→</span></button></div>
