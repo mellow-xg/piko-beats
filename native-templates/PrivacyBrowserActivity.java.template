@@ -1,0 +1,307 @@
+package __PACKAGE__;
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
+import android.webkit.CookieManager;
+import android.webkit.SafeBrowsingResponse;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.net.http.SslError;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+
+public class PrivacyBrowserActivity extends Activity {
+    public static final String EXTRA_URL = "piko.browser.url";
+    private static final int BG = Color.rgb(16, 14, 22);
+    private static final int PANEL = Color.rgb(30, 27, 39);
+    private static final int TEXT = Color.rgb(245, 241, 252);
+    private static final int MUTED = Color.rgb(173, 164, 193);
+    private static final int ACCENT = Color.rgb(190, 162, 255);
+
+    // Curated domain list. This blocks common ad/tracker requests but is not a full EasyList replacement.
+    private static final Set<String> BLOCKED_HOSTS = new HashSet<>(Arrays.asList(
+        "doubleclick.net", "googlesyndication.com", "googleadservices.com",
+        "adservice.google.com", "adnxs.com", "adsrvr.org", "adform.net",
+        "criteo.com", "taboola.com", "outbrain.com", "amazon-adsystem.com",
+        "scorecardresearch.com", "moatads.com", "zedo.com", "serving-sys.com",
+        "adroll.com", "quantserve.com", "bluekai.com", "demdex.net",
+        "smartadserver.com", "casalemedia.com", "popads.net", "popcash.net",
+        "adsterra.com", "exoclick.com", "trafficjunky.net", "mgid.com",
+        "adpushup.com", "adskeeper.co.uk", "revcontent.com"
+    ));
+
+    private WebView webView;
+    private EditText address;
+    private ProgressBar progress;
+    private TextView status;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(BG);
+        getWindow().setNavigationBarColor(BG);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
+
+        LinearLayout toolbar = new LinearLayout(this);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setPadding(dp(8), dp(8), dp(8), dp(8));
+        toolbar.setBackgroundColor(BG);
+
+        Button back = toolbarButton("‹", "Back");
+        back.setOnClickListener(view -> {
+            if (webView != null && webView.canGoBack()) webView.goBack();
+            else finish();
+        });
+        toolbar.addView(back, new LinearLayout.LayoutParams(dp(38), dp(42)));
+
+        address = new EditText(this);
+        address.setSingleLine(true);
+        address.setTextColor(TEXT);
+        address.setHintTextColor(MUTED);
+        address.setHint("https://website.com");
+        address.setTextSize(13);
+        address.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        address.setImeOptions(EditorInfo.IME_ACTION_GO);
+        address.setPadding(dp(12), 0, dp(12), 0);
+        address.setSelectAllOnFocus(true);
+        address.setBackground(background(PANEL, 10));
+        LinearLayout.LayoutParams addressParams = new LinearLayout.LayoutParams(0, dp(42), 1);
+        addressParams.setMargins(dp(5), 0, dp(5), 0);
+        toolbar.addView(address, addressParams);
+
+        Button go = toolbarButton("Go", "Open address");
+        go.setOnClickListener(view -> loadAddress());
+        toolbar.addView(go, new LinearLayout.LayoutParams(dp(45), dp(42)));
+
+        Button refresh = toolbarButton("↻", "Refresh");
+        refresh.setOnClickListener(view -> { if (webView != null) webView.reload(); });
+        toolbar.addView(refresh, new LinearLayout.LayoutParams(dp(38), dp(42)));
+
+        Button close = toolbarButton("×", "Close browser");
+        close.setOnClickListener(view -> finish());
+        toolbar.addView(close, new LinearLayout.LayoutParams(dp(38), dp(42)));
+        root.addView(toolbar, new LinearLayout.LayoutParams(-1, -2));
+
+        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(100);
+        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(PANEL));
+        root.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
+
+        webView = new WebView(this);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
+        settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setMediaPlaybackRequiresUserGesture(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            settings.setSafeBrowsingEnabled(true);
+        }
+        CookieManager cookies = CookieManager.getInstance();
+        cookies.setAcceptCookie(true);
+        cookies.setAcceptThirdPartyCookies(webView, false);
+
+        webView.setBackgroundColor(Color.WHITE);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+                if ("https".equals(scheme)) return false;
+                if ("http".equals(scheme) && uri.getHost() != null) {
+                    Uri upgraded = uri.buildUpon().scheme("https").build();
+                    view.loadUrl(upgraded.toString());
+                    return true;
+                }
+                return true;
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (isBlocked(uri)) {
+                    return new WebResourceResponse("text/plain", "utf-8", 204,
+                        "Blocked by Piko", Collections.emptyMap(),
+                        new ByteArrayInputStream(new byte[0]));
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                address.setText(url);
+                status.setText("Piko request filter enabled");
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                address.setText(url);
+                progress.setProgress(100);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame()) status.setText("Page couldn't load. Check your connection or try another site.");
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                handler.cancel();
+                status.setText("Secure connection failed. Navigation was blocked.");
+            }
+        });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                progress.setProgress(newProgress);
+                progress.setVisibility(newProgress >= 100 ? android.view.View.GONE : android.view.View.VISIBLE);
+            }
+
+            @Override
+            public boolean onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType, SafeBrowsingResponse callback) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                    callback.backToSafety(true);
+                    status.setText("Android Safe Browsing blocked a risky page.");
+                    return true;
+                }
+                return false;
+            }
+        });
+        root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        status = new TextView(this);
+        status.setText("Piko request filter enabled · not a complete ad blocker");
+        status.setTextColor(MUTED);
+        status.setTextSize(10);
+        status.setPadding(dp(12), dp(7), dp(12), dp(7));
+        status.setBackgroundColor(PANEL);
+        root.addView(status, new LinearLayout.LayoutParams(-1, -2));
+
+        setContentView(root);
+
+        address.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO ||
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                loadAddress();
+                return true;
+            }
+            return false;
+        });
+
+        String initial = getIntent().getStringExtra(EXTRA_URL);
+        if (initial != null && isSafeHttps(initial)) {
+            address.setText(initial);
+            webView.loadUrl(initial);
+        } else {
+            status.setText("Only HTTPS websites are allowed.");
+        }
+    }
+
+    private boolean isBlocked(Uri uri) {
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null ||
+            (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme))) return true;
+
+        String normalized = host.toLowerCase(Locale.ROOT);
+        for (String blocked : BLOCKED_HOSTS) {
+            if (normalized.equals(blocked) || normalized.endsWith("." + blocked)) return true;
+        }
+        String lowerUrl = uri.toString().toLowerCase(Locale.ROOT);
+        return lowerUrl.contains("/pagead/") || lowerUrl.contains("/adsystem/") ||
+               lowerUrl.contains("/adservice/") || lowerUrl.contains("/advertising/");
+    }
+
+    private void loadAddress() {
+        String raw = address.getText().toString().trim();
+        if (raw.isEmpty()) return;
+        if (!raw.matches("(?i)^https?://.*")) raw = "https://" + raw;
+        Uri uri = Uri.parse(raw);
+        if (!isSafeHttps(uri.toString())) {
+            status.setText("Enter an HTTPS website address.");
+            return;
+        }
+        address.clearFocus();
+        webView.loadUrl(uri.toString());
+    }
+
+    private boolean isSafeHttps(String value) {
+        Uri uri = Uri.parse(value);
+        return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null &&
+               uri.getUserInfo() == null;
+    }
+
+    private Button toolbarButton(String label, String description) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setContentDescription(description);
+        button.setAllCaps(false);
+        button.setTextSize(12);
+        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        button.setTextColor(TEXT);
+        button.setPadding(dp(4), 0, dp(4), 0);
+        button.setBackground(background(PANEL, 9));
+        return button;
+    }
+
+    private GradientDrawable background(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
+    }
+
+    private int dp(float value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.stopLoading();
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
+    }
+}
