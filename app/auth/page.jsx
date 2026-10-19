@@ -24,7 +24,13 @@ export default function AuthPage() {
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined } });
       if (result.error) throw result.error;
-      setMessage(mode === "signin" ? "Signed in. You can return to Piko Beats." : "Account created. Check your email if confirmation is enabled.");
+      if (mode === "signin" || result.data?.session) {
+        const requested = new URLSearchParams(window.location.search).get("next");
+        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+        window.location.assign(destination);
+        return;
+      }
+      setMessage("Account created. Check your email to confirm your address, then sign in.");
     } catch (error) {
       setMessage(error.message || "Authentication failed.");
     } finally {
