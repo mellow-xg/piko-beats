@@ -146,7 +146,7 @@ public class PrivacyBrowserActivity extends Activity {
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 address.setText(url);
                 adFilter.performScript(view, url);
-                status.setText("AdblockAndroid filter engine active");
+                status.setText("Request filtering enabled · some YouTube Music ads may still appear");
             }
 
             @Override
@@ -186,7 +186,7 @@ public class PrivacyBrowserActivity extends Activity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
 
         status = new TextView(this);
-        status.setText("AdblockAndroid filter engine · first-run filter download may take a moment");
+        status.setText("Request filtering enabled · filter lists update in the background");
         status.setTextColor(MUTED);
         status.setTextSize(10);
         status.setPadding(dp(12), dp(7), dp(12), dp(7));
@@ -194,6 +194,13 @@ public class PrivacyBrowserActivity extends Activity {
         root.addView(status, new LinearLayout.LayoutParams(-1, -2));
 
         setContentView(root);
+
+        // AdblockAndroid signals when downloaded/installed filter data changes.
+        // Clear WebView's resource cache so a manual reload can use the updated rules.
+        adFilter.getViewModel().getOnDirty().observe(this, ignored -> {
+            if (webView != null) webView.clearCache(false);
+            if (status != null) status.setText("Filter rules updated. Refresh this page to apply them.");
+        });
 
         address.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO ||
