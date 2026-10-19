@@ -69,16 +69,46 @@ if (!settingsPath) throw new Error("Could not locate generated Android settings.
 let settingsText = await readFile(settingsPath, "utf8");
 if (!settingsText.includes("jitpack.io")) {
   const dependencyRepositories = /(dependencyResolutionManagement\s*\{[\s\S]*?repositories\s*\{)/;
-  if (!dependencyRepositories.test(settingsText)) {
-    throw new Error("Could not find dependencyResolutionManagement repositories in settings.gradle.");
-  }
-  settingsText = settingsText.replace(
-    dependencyRepositories,
-    '$1\n        maven { url = uri("https://jitpack.io") }'
-  );
-  await writeFile(settingsPath, settingsText, "utf8");
-}
+  if (dependencyRepositories.test(settingsText)) {
+    settingsText = settingsText.replace(
+      dependencyRepositories,
+      '$1\n        maven { url = uri("https://jitpack.io") }'
+    );
+    await writeFile(settingsPath, settingsText, "utf8");
+  } else {
+    // Capacitor 8 templates may put dependency repositories in the root build.gradle
+    // instead of settings.gradle. Prefer that location if it exists.
+    const rootGradle = path.join(androidRoot, "build.gradle");
+    const rootGradleKts = path.join(androidRoot, "build.gradle.kts");
+    let rootGradlePath = rootGradle;
+    try { await readFile(rootGradlePath, "utf8"); }
+    catch { rootGradlePath = rootGradleKts; }
 
+    let rootGradleText;
+    try { rootGradleText = await readFile(rootGradlePath, "utf8"); }
+    catch { rootGradleText = null; }
+
+    const allProjectsRepositories = rootGradleText
+      ? /(allprojects\s*\{[\s\S]*?repositories\s*\{)/
+      : null;
+
+    if (rootGradleText && allProjectsRepositories.test(rootGradleText)) {
+      const entry = rootGradlePath.endsWith(".kts")
+        ? '$1\n        maven { url = uri("https://jitpack.io") }'
+        : '$1\n        maven { url "https://jitpack.io" }';
+      rootGradleText = rootGradleText.replace(allProjectsRepositories, entry);
+      await writeFile(rootGradlePath, rootGradleText, "utf8");
+    } else {
+      // Last-resort modern Gradle settings block, when the generated project has
+      // no shared repository block at all.
+      const kotlinDsl = settingsPath.endsWith(".kts");
+      const repositoriesBlock = kotlinDsl
+        ? '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url = uri("https://jitpack.io") } } }\n'
+        : '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } } }\n';
+      await writeFile(settingsPath, settingsText + repositoriesBlock, "utf8");
+    }
+  }
+}
 const appGradlePath = path.join(androidRoot, "app", "build.gradle");
 const appGradleKtsPath = path.join(androidRoot, "app", "build.gradle.kts");
 let appGradlePathResolved = appGradlePath;
