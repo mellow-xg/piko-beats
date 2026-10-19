@@ -20,6 +20,9 @@
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
+  "overrides": {
+    "napi-postinstall": "0.3.4"
+  },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
     "eslint": "^10.13.0",
