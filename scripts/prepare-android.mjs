@@ -53,4 +53,53 @@ if (!manifest.includes(".PrivacyBrowserActivity")) {
   await writeFile(manifestPath, manifest, "utf8");
 }
 
-console.log("Prepared Piko Beats native browser plugin and Activity.");
+// Add the AdblockAndroid dependency to the generated Capacitor project.
+const settingsCandidates = [
+  path.join(androidRoot, "settings.gradle"),
+  path.join(androidRoot, "settings.gradle.kts")
+];
+const settingsPath = await (async () => {
+  for (const candidate of settingsCandidates) {
+    try { await readFile(candidate, "utf8"); return candidate; } catch {}
+  }
+  return null;
+})();
+if (!settingsPath) throw new Error("Could not locate generated Android settings.gradle.");
+
+let settingsText = await readFile(settingsPath, "utf8");
+if (!settingsText.includes("jitpack.io")) {
+  const dependencyRepositories = /(dependencyResolutionManagement\\s*\\{[\\s\\S]*?repositories\\s*\\{)/;
+  if (!dependencyRepositories.test(settingsText)) {
+    throw new Error("Could not find dependencyResolutionManagement repositories in settings.gradle.");
+  }
+  settingsText = settingsText.replace(
+    dependencyRepositories,
+    '$1\\n        maven { url = uri("https://jitpack.io") }'
+  );
+  await writeFile(settingsPath, settingsText, "utf8");
+}
+
+const appGradlePath = path.join(androidRoot, "app", "build.gradle");
+const appGradleKtsPath = path.join(androidRoot, "app", "build.gradle.kts");
+let appGradlePathResolved = appGradlePath;
+try { await readFile(appGradlePathResolved, "utf8"); }
+catch { appGradlePathResolved = appGradleKtsPath; }
+
+let appGradle = await readFile(appGradlePathResolved, "utf8");
+const adblockDependency = "com.github.Edsuns.AdblockAndroid:ad-filter:1.0";
+if (!appGradle.includes(adblockDependency)) {
+  if (appGradlePathResolved.endsWith(".kts")) {
+    appGradle = appGradle.replace(
+      /dependencies\\s*\\{/,
+      (match) => match + '\\n    implementation("' + adblockDependency + '")'
+    );
+  } else {
+    appGradle = appGradle.replace(
+      /dependencies\\s*\\{/,
+      (match) => match + "\\n    implementation '" + adblockDependency + "'"
+    );
+  }
+  await writeFile(appGradlePathResolved, appGradle, "utf8");
+}
+
+console.log("Prepared Piko Beats native browser with the AdblockAndroid filter library.");
