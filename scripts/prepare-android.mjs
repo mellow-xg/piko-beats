@@ -121,12 +121,12 @@ if (!appGradle.includes(adblockDependency)) {
   if (appGradlePathResolved.endsWith(".kts")) {
     appGradle = appGradle.replace(
       /dependencies\s*\{/,
-      (match) => match + '\n    implementation("' + adblockDependency + '")'
+      (match) => match + '\n    implementation("' + adblockDependency + '") { exclude(group = "org.jetbrains.anko") }'
     );
   } else {
     appGradle = appGradle.replace(
       /dependencies\s*\{/,
-      (match) => match + "\n    implementation '" + adblockDependency + "'"
+      (match) => match + "\n    implementation('" + adblockDependency + "') { exclude group: 'org.jetbrains.anko' }"
     );
   }
   await writeFile(appGradlePathResolved, appGradle, "utf8");
