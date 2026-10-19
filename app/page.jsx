@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 const tracks = [
   { id: 1, title: "Midnight Drive", artist: "Nova Bloom", genre: "Electronic", color: "violet", duration: "3:42" },
@@ -77,7 +78,7 @@ export default function Home() {
         <header className="topbar">
           <div className="history-buttons"><button aria-label="Back" onClick={() => setActiveTab("Home")}>‹</button><button aria-label="Forward" onClick={() => setActiveTab("Home")}>›</button></div>
           <label className="search-box"><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setActiveTab("Search"); }} placeholder="Search songs, artists, moods..." aria-label="Search music" /><kbd>⌘ K</kbd></label>
-          <button className="profile-button" aria-label="Profile">G</button>
+          <Link className="profile-button" href="/auth" aria-label="Sign in or profile" style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>G</Link>
         </header>
 
         <div className="page-content">
