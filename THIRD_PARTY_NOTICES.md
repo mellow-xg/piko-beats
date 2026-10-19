@@ -4,10 +4,10 @@
 
 - Source: https://github.com/Edsuns/AdblockAndroid
 - Purpose: Native Android WebView content-filtering engine for Piko Beats' in-app music browser.
-- Integration method: Gradle dependency `com.github.Edsuns.AdblockAndroid:ad-filter:1.0` via JitPack; it is not vendored or modified in this repository.
+- Integration method: Gradle dependency `com.github.Edsuns.AdblockAndroid:ad-filter:master-SNAPSHOT` via JitPack; it is not vendored or modified in this repository.
 - License: GNU Lesser General Public License v2.1 (LGPL-2.1). See [licenses/AdblockAndroid-LICENSE.txt](licenses/AdblockAndroid-LICENSE.txt).
 - Filter lists: AdGuard Base, EasyPrivacy Lite, and AdGuard Tracking Protection are downloaded from their published filter URLs at first browser launch. The list publishers can change their contents and terms independently.
-- Upstream status note: The upstream GitHub repository reports its latest release as v0.9.1 from 2021, while its current README documents the JitPack coordinate above. This dependency must be verified by CI; if the upstream artifact cannot be resolved or does not build with the current Android toolchain, replace it with a maintained compatible filter engine rather than pretending ad blocking works.
+- Upstream status note: The upstream GitHub repository reports its latest release as v0.9.1 from 2021, while its current README documents the JitPack coordinate above. The 1.0 release coordinate could not be resolved in CI, so the build script now tries the upstream master-SNAPSHOT. This snapshot must pass CI before the native browser can be considered buildable; if it also fails, replace it with a maintained compatible filter engine rather than pretending ad blocking works.
 
 ## Bare Browser
 
