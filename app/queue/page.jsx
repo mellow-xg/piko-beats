@@ -56,7 +56,7 @@ export default function QueuePage() {
     }).catch(() => { if (active) setChecking(false); });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      if (session?.user) void loadTasks(session.user.id);
+      if (session?.user) window.setTimeout(() => void loadTasks(session.user.id), 0);
       else setTasks([]);
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
