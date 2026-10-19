@@ -57,7 +57,7 @@ export default function ListenPage() {
   return <main className="music-tool-shell">
     <header className="tool-topbar">
       <Link className="brand tool-brand" href="/"><span className="brand-mark">p</span><span>Piko<span className="brand-light">Beats</span></span></Link>
-      <div className="tool-top-actions"><Link href="/queue">Playlist queue</Link><Link href="/auth">Account</Link></div>
+      <div className="tool-top-actions"><Link href="/browser">Browser</Link><Link href="/queue">Playlist queue</Link><Link href="/auth">Account</Link></div>
     </header>
     <section className="music-tool-content">
       <p className="eyebrow">LISTEN ONLINE</p>
