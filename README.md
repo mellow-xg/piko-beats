@@ -1,29 +1,36 @@
 # Piko Beats
 
-Piko Beats is an Android-first online music hub with a cloud playlist queue and a Windows PC agent planned for processing authorized audio files when the PC is available.
+Piko Beats is an Android-first online music hub with a private cloud playlist queue and a Windows PC agent for metadata work and user-authorized local music uploads.
 
-## Current implementation branch
+## Implemented on `feat/piko-beats-foundation`
 
-Work is being developed on `feat/piko-beats-foundation`; `main` has not been changed.
+- Next.js App Router + React mobile-first dark UI, configured for static export through Capacitor.
+- Supabase email sign-up/sign-in at `/auth`.
+- Online listening at `/listen` through official YouTube/YouTube Music, Spotify, and SoundCloud embeds where supported.
+- Android browser page at `/browser`, with a native WebView intended to use the AdblockAndroid request-filtering engine.
+- Supabase playlist queue at `/queue` for user-owned `sync_playlist_metadata` tasks that persist while the PC is switched off.
+- Windows PC agent at `agent/piko_agent.py`: Supabase email/password sign-in with OS credential-store token caching, safe claiming of metadata-only queue tasks, official provider metadata import, and a separate explicit Google Drive upload command for authorized local audio files.
 
-- **Web shell:** Next.js App Router, React, static export for Capacitor.
-- **Android:** Capacitor 8 configuration and a GitHub Actions debug-APK workflow.
-- **Authentication:** Supabase email sign-up/sign-in at `/auth`.
-- **Online listening:** `/listen` uses official YouTube, Spotify, and SoundCloud embeds where supported. Provider playback and ad behavior remain under the provider's control.
-- **Playlist queue:** `/queue` creates user-owned Supabase `sync_playlist_metadata` tasks. Tasks stay queued when the PC is off.
-- **Database:** Supabase profiles, tracks, playlists, playlist entries, PC agents, processing tasks, and Drive file references are configured with RLS enabled.
+## Backend
 
-## Current limitations
+Supabase project: `fwgmvyzmrggmkedjqdki`
 
-The Windows PC agent is not implemented yet, so queued tasks will not be processed automatically yet. Google Drive OAuth/upload is not implemented. The home page's curated sample tracks are still demo items; they are not audio files. Background audio, Android media/lock-screen controls, and APK build success still require testing.
+Tables with RLS: `profiles`, `tracks`, `playlists`, `playlist_tracks`, `pc_agents`, `processing_tasks`, and `drive_files`.
 
-## Source and download rules
+New task-claiming functions restrict task claiming/finishing to an authenticated user who owns the registered PC agent. The client is permitted to enqueue supported provider metadata tasks only; it cannot enqueue arbitrary PC commands.
 
-Piko Beats must not extract protected audio from YouTube Music, bypass service download restrictions, or circumvent provider ads. Playlist links are queued for metadata workflows. Downloads and Drive uploads must be restricted to files the user is authorized to download and store.
+## Android browser dependencies
+
+- [Edsuns/AdblockAndroid](https://github.com/Edsuns/AdblockAndroid): WebView filter engine. It is integrated as a Gradle dependency and set up to subscribe to AdGuard Base, EasyPrivacy Lite, and AdGuard Tracking Protection. CI must confirm that the upstream JitPack artifact remains resolvable with current tooling. License and attribution: `THIRD_PARTY_NOTICES.md`.
+- [BareBrowser/bare-browser](https://github.com/BareBrowser/bare-browser): evaluated as a feature reference. It is a full Chromium patch series requiring its own heavy build—not an embeddable Capacitor plugin—so Piko Beats does not incorporate its Chromium patches or APK.
+
+## Source restrictions
+
+Piko Beats does not extract protected audio from YouTube Music, bypass provider download restrictions, or circumvent provider subscriptions/DRM. Playlist links create metadata tasks. Audio uploads are limited to local files the user owns or is authorized to store; uploaded files remain private in Google Drive by default.
 
 ## Local development
 
-Requires Node.js 22 or higher.
+Requires Node.js 22+.
 
 ```bash
 npm install
@@ -31,12 +38,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The default Supabase values in `.env.example` are public client configuration only. The Supabase publishable key is designed for client use; database access is governed by RLS. Never expose a Supabase service-role/secret key, Google client secret, or Google refresh token in the browser or APK.
+See [ANDROID.md](ANDROID.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for Android setup and licenses.
 
-## Android build
+## Current status
 
-The GitHub Actions workflow `.github/workflows/android.yml` installs dependencies, lints, builds the static Next.js export, generates the Capacitor Android project, builds a debug APK, and publishes it as an Actions artifact. This first run must pass before the artifact should be treated as usable.
-
-## Supabase and PC agent
-
-The task queue currently accepts only the `sync_playlist_metadata` task type from this UI. The future PC agent must authenticate separately, validate provider URLs, claim tasks safely, and never trust arbitrary client payloads as shell commands or download instructions.
+Source code and Supabase schema are committed, but an APK build and device playback have not yet been verified. Google Drive OAuth must be configured on the Windows PC, and the PC agent needs real-account testing before this is production-ready.
