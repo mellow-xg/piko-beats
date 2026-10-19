@@ -87,7 +87,7 @@ export default function Home() {
         <header className="topbar">
           <div className="history-buttons"><button aria-label="Back" onClick={() => setActiveTab("Home")}>‹</button><button aria-label="Forward" onClick={() => setActiveTab("Home")}>›</button></div>
           <label className="search-box"><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setActiveTab("Search"); }} placeholder="Search songs, artists, moods..." aria-label="Search music" /><kbd>⌘ K</kbd></label>
-          <div className="topbar-links"><Link className="topbar-action" href="/listen">Listen online</Link><Link className="topbar-action" href="/queue">Playlist queue</Link></div><Link className="profile-button" href={signedInEmail ? "/queue" : "/auth"} aria-label={signedInEmail ? "Open your music queue" : "Sign in or profile"} title={signedInEmail || "Sign in"} style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>{signedInEmail ? signedInEmail[0].toUpperCase() : "G"}</Link>
+          <div className="topbar-links"><Link className="topbar-action" href="/browser">Browser</Link><Link className="topbar-action" href="/listen">Listen online</Link><Link className="topbar-action" href="/queue">Playlist queue</Link></div><Link className="profile-button" href={signedInEmail ? "/queue" : "/auth"} aria-label={signedInEmail ? "Open your music queue" : "Sign in or profile"} title={signedInEmail || "Sign in"} style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>{signedInEmail ? signedInEmail[0].toUpperCase() : "G"}</Link>
         </header>
 
         <div className="page-content">
