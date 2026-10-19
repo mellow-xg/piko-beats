@@ -116,7 +116,7 @@ try { await readFile(appGradlePathResolved, "utf8"); }
 catch { appGradlePathResolved = appGradleKtsPath; }
 
 let appGradle = await readFile(appGradlePathResolved, "utf8");
-const adblockDependency = "com.github.Edsuns.AdblockAndroid:ad-filter:1.0";
+const adblockDependency = "com.github.Edsuns.AdblockAndroid:ad-filter:master-SNAPSHOT";
 if (!appGradle.includes(adblockDependency)) {
   if (appGradlePathResolved.endsWith(".kts")) {
     appGradle = appGradle.replace(
