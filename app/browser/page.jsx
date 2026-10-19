@@ -48,7 +48,7 @@ export default function BrowserPage() {
     <section className="music-tool-content">
       <p className="eyebrow">BROWSE INSIDE PIKO</p>
       <h1>Your music, one app.</h1>
-      <p className="muted tool-intro">Open a music site in Piko Beats' Android browser. A curated request filter blocks common ad and tracking endpoints; it cannot remove every ad or bypass a service's restrictions.</p>
+      <p className="muted tool-intro">Open a music site in Piko Beats&apos; Android browser. A curated request filter blocks common ad and tracking endpoints; it cannot remove every ad or bypass a service&apos;s restrictions.</p>
       <form className="music-link-form" onSubmit={(event) => { event.preventDefault(); void openBrowser(); }}>
         <label htmlFor="browser-url">Website address</label>
         <div className="music-link-row"><input id="browser-url" type="url" inputMode="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://example.com" required /><button className="primary-button" disabled={busy} type="submit">{busy ? "Opening…" : "Open in Piko"} <span>↗</span></button></div>
