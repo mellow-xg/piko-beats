@@ -67,48 +67,64 @@ const settingsPath = await (async () => {
 if (!settingsPath) throw new Error("Could not locate generated Android settings.gradle.");
 
 let settingsText = await readFile(settingsPath, "utf8");
-if (!settingsText.includes("jitpack.io")) {
-  const dependencyRepositories = /(dependencyResolutionManagement\s*\{[\s\S]*?repositories\s*\{)/;
-  if (dependencyRepositories.test(settingsText)) {
+const settingsRepoBlock = /(dependencyResolutionManagement\s*\{[\s\S]*?repositories\s*\{)/;
+const rootRepoBlock = /(allprojects\s*\{[\s\S]*?repositories\s*\{)/;
+
+if (settingsRepoBlock.test(settingsText)) {
+  if (!settingsText.includes("jitpack.io")) {
     settingsText = settingsText.replace(
-      dependencyRepositories,
-      '$1\n        maven { url = uri("https://jitpack.io") }\n        maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
+      settingsRepoBlock,
+      '$1\n        maven { url = uri("https://jitpack.io") }'
     );
-    await writeFile(settingsPath, settingsText, "utf8");
-  } else {
-    // Capacitor 8 templates may put dependency repositories in the root build.gradle
-    // instead of settings.gradle. Prefer that location if it exists.
-    const rootGradle = path.join(androidRoot, "build.gradle");
-    const rootGradleKts = path.join(androidRoot, "build.gradle.kts");
-    let rootGradlePath = rootGradle;
-    try { await readFile(rootGradlePath, "utf8"); }
-    catch { rootGradlePath = rootGradleKts; }
+  }
+  if (!settingsText.includes("appodeal-public")) {
+    settingsText = settingsText.replace(
+      settingsRepoBlock,
+      '$1\n        maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
+    );
+  }
+  await writeFile(settingsPath, settingsText, "utf8");
+} else {
+  const rootGradle = path.join(androidRoot, "build.gradle");
+  const rootGradleKts = path.join(androidRoot, "build.gradle.kts");
+  let rootGradlePath = rootGradle;
+  try { await readFile(rootGradlePath, "utf8"); }
+  catch { rootGradlePath = rootGradleKts; }
 
-    let rootGradleText;
-    try { rootGradleText = await readFile(rootGradlePath, "utf8"); }
-    catch { rootGradleText = null; }
+  let rootGradleText = null;
+  try { rootGradleText = await readFile(rootGradlePath, "utf8"); }
+  catch {}
 
-    const allProjectsRepositories = rootGradleText
-      ? /(allprojects\s*\{[\s\S]*?repositories\s*\{)/
-      : null;
-
-    if (rootGradleText && allProjectsRepositories.test(rootGradleText)) {
-      const entry = rootGradlePath.endsWith(".kts")
-        ? '$1\n        maven { url = uri("https://jitpack.io") }\n        maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
-        : '$1\n        maven { url "https://jitpack.io" }\n        maven { url "https://artifactory.appodeal.com/appodeal-public" }';
-      rootGradleText = rootGradleText.replace(allProjectsRepositories, entry);
-      await writeFile(rootGradlePath, rootGradleText, "utf8");
-    } else {
-      // Last-resort modern Gradle settings block, when the generated project has
-      // no shared repository block at all.
-      const kotlinDsl = settingsPath.endsWith(".kts");
-      const repositoriesBlock = kotlinDsl
-        ? '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url = uri("https://jitpack.io") }; maven { url = uri("https://artifactory.appodeal.com/appodeal-public") } } }\n'
-        : '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url "https://jitpack.io" }; maven { url "https://artifactory.appodeal.com/appodeal-public" } } }\n';
-      await writeFile(settingsPath, settingsText + repositoriesBlock, "utf8");
+  if (rootGradleText && rootRepoBlock.test(rootGradleText)) {
+    const kotlinDsl = rootGradlePath.endsWith(".kts");
+    if (!rootGradleText.includes("jitpack.io")) {
+      const repoLine = kotlinDsl
+        ? 'maven { url = uri("https://jitpack.io") }'
+        : 'maven { url "https://jitpack.io" }';
+      rootGradleText = rootGradleText.replace(rootRepoBlock, (match) => match + "\n        " + repoLine);
     }
+    if (!rootGradleText.includes("appodeal-public")) {
+      const repoLine = kotlinDsl
+        ? 'maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
+        : 'maven { url "https://artifactory.appodeal.com/appodeal-public" }';
+      rootGradleText = rootGradleText.replace(rootRepoBlock, (match) => match + "\n        " + repoLine);
+    }
+    await writeFile(rootGradlePath, rootGradleText, "utf8");
+  } else {
+    const kotlinDsl = settingsPath.endsWith(".kts");
+    const jitpack = kotlinDsl
+      ? 'maven { url = uri("https://jitpack.io") }'
+      : 'maven { url "https://jitpack.io" }';
+    const appodeal = kotlinDsl
+      ? 'maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
+      : 'maven { url "https://artifactory.appodeal.com/appodeal-public" }';
+    const repositoriesBlock = kotlinDsl
+      ? '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); ' + jitpack + '; ' + appodeal + ' } }\n'
+      : '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); ' + jitpack + '; ' + appodeal + ' } }\n';
+    await writeFile(settingsPath, settingsText + repositoriesBlock, "utf8");
   }
 }
+
 const appGradlePath = path.join(androidRoot, "app", "build.gradle");
 const appGradleKtsPath = path.join(androidRoot, "app", "build.gradle.kts");
 let appGradlePathResolved = appGradlePath;
