@@ -72,7 +72,7 @@ if (!settingsText.includes("jitpack.io")) {
   if (dependencyRepositories.test(settingsText)) {
     settingsText = settingsText.replace(
       dependencyRepositories,
-      '$1\n        maven { url = uri("https://jitpack.io") }'
+      '$1\n        maven { url = uri("https://jitpack.io") }\n        maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
     );
     await writeFile(settingsPath, settingsText, "utf8");
   } else {
@@ -94,8 +94,8 @@ if (!settingsText.includes("jitpack.io")) {
 
     if (rootGradleText && allProjectsRepositories.test(rootGradleText)) {
       const entry = rootGradlePath.endsWith(".kts")
-        ? '$1\n        maven { url = uri("https://jitpack.io") }'
-        : '$1\n        maven { url "https://jitpack.io" }';
+        ? '$1\n        maven { url = uri("https://jitpack.io") }\n        maven { url = uri("https://artifactory.appodeal.com/appodeal-public") }'
+        : '$1\n        maven { url "https://jitpack.io" }\n        maven { url "https://artifactory.appodeal.com/appodeal-public" }';
       rootGradleText = rootGradleText.replace(allProjectsRepositories, entry);
       await writeFile(rootGradlePath, rootGradleText, "utf8");
     } else {
@@ -103,8 +103,8 @@ if (!settingsText.includes("jitpack.io")) {
       // no shared repository block at all.
       const kotlinDsl = settingsPath.endsWith(".kts");
       const repositoriesBlock = kotlinDsl
-        ? '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url = uri("https://jitpack.io") } } }\n'
-        : '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } } }\n';
+        ? '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url = uri("https://jitpack.io") }; maven { url = uri("https://artifactory.appodeal.com/appodeal-public") } } }\n'
+        : '\ndependencyResolutionManagement { repositories { google(); mavenCentral(); maven { url "https://jitpack.io" }; maven { url "https://artifactory.appodeal.com/appodeal-public" } } }\n';
       await writeFile(settingsPath, settingsText + repositoriesBlock, "utf8");
     }
   }
