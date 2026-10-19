@@ -1,7 +1,8 @@
 {
   "name": "piko-beats",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,15 +12,15 @@
     "android:open": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
     "@supabase/supabase-js": "^2.75.0",
     "next": "15.5.4",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.4.3",
-    "@capacitor/core": "^7.4.3",
-    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^8.5.1",
     "eslint": "9.35.0",
     "eslint-config-next": "15.5.4"
   }
