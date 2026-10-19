@@ -166,13 +166,11 @@ public class PrivacyBrowserActivity extends Activity {
                 status.setText("Secure connection failed. Navigation was blocked.");
             }
             @Override
-            public boolean onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType, SafeBrowsingResponse callback) {
+            public void onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType, SafeBrowsingResponse callback) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                     callback.backToSafety(true);
-                    status.setText("Android Safe Browsing blocked a risky page.");
-                    return true;
                 }
-                return false;
+                status.setText("Android Safe Browsing blocked a risky page.");
             }
         });
 
