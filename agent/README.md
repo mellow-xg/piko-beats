@@ -4,18 +4,9 @@ The Windows agent runs only when you launch it. It checks the Supabase task queu
 
 ## 1. Prepare the PC
 
-Install Python 3.11+ from python.org. In PowerShell:
+Install Python 3.11+ from python.org, then open the `agent` folder and double-click **setup-agent.bat**. It creates a virtual environment, installs dependencies, and copies `.env.example` to `.env` on first setup.
 
-```powershell
-cd agent
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-Copy-Item .env.example .env
-```
-
-Review `.env`. It contains the project URL and publishable key; these are public client configuration values, not an admin/service-role secret. Keep your account password, Google OAuth client secret, and refresh tokens private.
+Review `agent\\.env`. It contains the project URL and publishable key; these are public client configuration values, not an admin/service-role secret. Keep your account password, Google OAuth client secret, and refresh tokens private.
 
 ## 2. Start the worker
 
