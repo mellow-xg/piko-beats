@@ -27,7 +27,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "sb_publishable_vTdHEf8J6UT
 AGENT_NAME = os.getenv("PC_AGENT_NAME", f"{platform.node() or 'Windows PC'} · Piko Beats")
 POLL_SECONDS = max(10, int(os.getenv("POLL_INTERVAL_SECONDS", "30")))
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_DATA_API_KEY", "").strip()
-IMPORT_DIR = Path(os.getenv("IMPORT_DIR", str(Path.home() / "Music" / "Piko Beats Imports"))).expanduser()
+IMPORT_DIR = Path(os.path.expandvars(os.getenv("IMPORT_DIR", str(Path.home() / "Music" / "Piko Beats Imports")))).expanduser()
 GOOGLE_OAUTH_CLIENT_FILE = Path(os.getenv("GOOGLE_OAUTH_CLIENT_FILE", str(ROOT / "credentials.json"))).expanduser()
 MAX_UPLOAD_MB = max(1, int(os.getenv("MAX_UPLOAD_MB", "200")))
 MAX_PLAYLIST_ITEMS = min(500, max(1, int(os.getenv("MAX_PLAYLIST_ITEMS", "250"))))
@@ -70,6 +70,8 @@ def source_details(value: str) -> dict[str, Any]:
             raise ValueError("Invalid YouTube video identifier.")
         if playlist_id and not ID_PATTERN.fullmatch(playlist_id):
             raise ValueError("Invalid YouTube playlist identifier.")
+        if not item_id and not playlist_id:
+            raise ValueError("This YouTube URL needs a video ID or playlist ID.")
         return {
             "provider": provider,
             "url": parsed.geturl(),
@@ -660,8 +662,11 @@ def main() -> int:
         print("A Supabase email is required.", file=sys.stderr)
         return 2
     if args.sign_out:
-        keyring.delete_password(SERVICE_NAME, f"session:{email.lower()}")
-        print("Removed the cached Supabase session.")
+        try:
+            keyring.delete_password(SERVICE_NAME, f"session:{email.lower()}")
+        except keyring.errors.PasswordDeleteError:
+            pass
+        print("Removed the cached Supabase session if one existed.")
         return 0
 
     try:
