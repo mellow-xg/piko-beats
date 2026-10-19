@@ -52,6 +52,27 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Smoke-test app startup on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop app.pikobeats.music || true
+            adb shell monkey -p app.pikobeats.music 1
+            sleep 10
+            if ! adb shell pidof app.pikobeats.music; then
+              adb logcat -d -t 2000 > /tmp/piko-logcat.txt
+              echo "Piko Beats exited after launch. Relevant crash log:"
+              grep -n -E "FATAL EXCEPTION|AndroidRuntime|Process: app.pikobeats.music|Fatal signal|chromium" /tmp/piko-logcat.txt || true
+              cat /tmp/piko-logcat.txt
+              exit 1
+            fi
+            adb logcat -d -t 1200 | grep -E "FATAL EXCEPTION|AndroidRuntime|Process: app.pikobeats.music" && exit 1 || true
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
