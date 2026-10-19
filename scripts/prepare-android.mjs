@@ -156,13 +156,13 @@ if (!appGradle.includes(workManagerDependency)) {
   // Pin the runtime + KTX artifact to a modern compatible release (API 23+).
   if (appGradlePathResolved.endsWith(".kts")) {
     appGradle = appGradle.replace(
-      /dependencies\\s*\\{/,
-      (match) => match + '\\n    implementation("' + workManagerDependency + '")'
+      /dependencies\s*\{/,
+      (match) => match + '\n    implementation("' + workManagerDependency + '")'
     );
   } else {
     appGradle = appGradle.replace(
-      /dependencies\\s*\\{/,
-      (match) => match + "\\n    implementation('" + workManagerDependency + "')"
+      /dependencies\s*\{/,
+      (match) => match + "\n    implementation('" + workManagerDependency + "')"
     );
   }
   await writeFile(appGradlePathResolved, appGradle, "utf8");
