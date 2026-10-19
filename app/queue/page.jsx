@@ -28,7 +28,7 @@ function statusLabel(status) {
 
 export default function QueuePage() {
   const [user, setUser] = useState(null);
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(Boolean(supabase));
   const [url, setUrl] = useState("");
   const [tasks, setTasks] = useState([]);
   const [message, setMessage] = useState("");
@@ -46,7 +46,7 @@ export default function QueuePage() {
 
   useEffect(() => {
     let active = true;
-    if (!supabase) { setChecking(false); return; }
+    if (!supabase) return;
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       const currentUser = data.session?.user || null;
