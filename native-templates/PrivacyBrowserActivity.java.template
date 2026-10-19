@@ -165,15 +165,6 @@ public class PrivacyBrowserActivity extends Activity {
                 handler.cancel();
                 status.setText("Secure connection failed. Navigation was blocked.");
             }
-        });
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                progress.setProgress(newProgress);
-                progress.setVisibility(newProgress >= 100 ? android.view.View.GONE : android.view.View.VISIBLE);
-            }
-
             @Override
             public boolean onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType, SafeBrowsingResponse callback) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -183,6 +174,16 @@ public class PrivacyBrowserActivity extends Activity {
                 }
                 return false;
             }
+        });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                progress.setProgress(newProgress);
+                progress.setVisibility(newProgress >= 100 ? android.view.View.GONE : android.view.View.VISIBLE);
+            }
+
+
         });
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
 
