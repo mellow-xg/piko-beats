@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { supabase } from "../lib/supabase";
 
 const tracks = [
   { id: 1, title: "Midnight Drive", artist: "Nova Bloom", genre: "Electronic", color: "violet", duration: "3:42" },
@@ -28,6 +29,14 @@ export default function Home() {
   const [current, setCurrent] = useState(null);
   const [liked, setLiked] = useState([]);
   const [notice, setNotice] = useState("");
+  const [signedInEmail, setSignedInEmail] = useState("");
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setSignedInEmail(data.session?.user?.email || ""));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setSignedInEmail(session?.user?.email || ""));
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const visibleTracks = useMemo(() => tracks.filter((track) =>
     `${track.title} ${track.artist} ${track.genre}`.toLowerCase().includes(query.toLowerCase())
@@ -65,7 +74,7 @@ export default function Home() {
         <button className="playlist-link" onClick={() => setNotice("Playlist creation will be enabled with your account.")}><span>＋</span> Create playlist</button>
         <button className="playlist-link" onClick={() => setActiveTab("Your Library")}><span className="playlist-dot" /> Recently played</button>
         <div className="sidebar-bottom">
-          <div className="privacy-chip"><span className="privacy-dot" /> No ads. Just music.</div>
+          <div className="privacy-chip"><span className="privacy-dot" /> Your music, together.</div>
           <div className="agent-card">
             <div className="agent-icon">⌘</div>
             <div><strong>PC Agent</strong><span>Not connected yet</span></div>
@@ -78,7 +87,7 @@ export default function Home() {
         <header className="topbar">
           <div className="history-buttons"><button aria-label="Back" onClick={() => setActiveTab("Home")}>‹</button><button aria-label="Forward" onClick={() => setActiveTab("Home")}>›</button></div>
           <label className="search-box"><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setActiveTab("Search"); }} placeholder="Search songs, artists, moods..." aria-label="Search music" /><kbd>⌘ K</kbd></label>
-          <Link className="profile-button" href="/auth" aria-label="Sign in or profile" style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>G</Link>
+          <div className="topbar-links"><Link className="topbar-action" href="/listen">Listen online</Link><Link className="topbar-action" href="/queue">Playlist queue</Link></div><Link className="profile-button" href={signedInEmail ? "/queue" : "/auth"} aria-label={signedInEmail ? "Open your music queue" : "Sign in or profile"} title={signedInEmail || "Sign in"} style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>{signedInEmail ? signedInEmail[0].toUpperCase() : "G"}</Link>
         </header>
 
         <div className="page-content">
@@ -88,7 +97,7 @@ export default function Home() {
           </div>
 
           {activeTab === "Home" && <section className="hero-card">
-            <div className="hero-glow" /><div className="hero-copy"><span className="pill-label">PIKO MIX · 01</span><h2>Find your<br /><em>own rhythm.</em></h2><p>Your music, your playlists, your pace. All in one calm place.</p><button className="primary-button" onClick={() => playTrack(tracks[0])}><span>▶</span> Explore your music</button></div>
+            <div className="hero-glow" /><div className="hero-copy"><span className="pill-label">PIKO MIX · 01</span><h2>Find your<br /><em>own rhythm.</em></h2><p>Your music, your playlists, your pace. All in one calm place.</p><Link className="primary-button" href="/listen" style={{ textDecoration: "none" }}><span>▶</span> Listen online</Link></div>
             <div className="hero-art"><div className="orbit orbit-a" /><div className="orbit orbit-b" /><div className="hero-disc"><span>p</span></div><div className="floating-note note-a">♪</div><div className="floating-note note-b">♫</div></div>
           </section>}
 
@@ -101,7 +110,7 @@ export default function Home() {
             </div>
           </section>
 
-          {activeTab === "Home" && <section className="section-block upload-callout"><div className="upload-symbol">↥</div><div><p className="eyebrow">YOUR COLLECTION, CONNECTED</p><h2>Bring your music together.</h2><p className="muted">The PC agent will help organize eligible music files and sync them to your library.</p></div><button className="secondary-button" onClick={() => setNotice("PC agent setup will be available in a later phase.")}>Set up PC agent <span>→</span></button></section>}
+          {activeTab === "Home" && <section className="section-block upload-callout"><div className="upload-symbol">↥</div><div><p className="eyebrow">YOUR COLLECTION, CONNECTED</p><h2>Bring your music together.</h2><p className="muted">The PC agent will help organize eligible music files and sync them to your library.</p></div><Link className="secondary-button" href="/queue" style={{ textDecoration: "none" }}>Add a playlist <span>→</span></Link></section>}
 
           <footer className="footer-note"><span>PIKO BEATS</span><span>Built for listening, not distractions.</span><span>Demo catalog · No audio connected</span></footer>
         </div>
