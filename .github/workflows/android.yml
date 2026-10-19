@@ -42,6 +42,9 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Add native browser and request filter
+        run: node scripts/prepare-android.mjs
+
       - name: Sync web assets
         run: npx cap sync android
 
