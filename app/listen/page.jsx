@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import "./listen-enhancements.css";
 
 function parseMusicLink(value) {
@@ -34,6 +35,7 @@ function parseMusicLink(value) {
 }
 
 const recentKey = "piko-beats-recent-online-links";
+const PrivacyBrowser = registerPlugin("PrivacyBrowser");
 
 export default function ListenPage() {
   const [input, setInput] = useState("");
@@ -58,6 +60,19 @@ export default function ListenPage() {
   }
 
   function useRecent(item) { setInput(item.sourceUrl); setError(""); inputRef.current?.focus(); }
+
+  async function openInFilteredBrowser() {
+    if (!selection) return;
+    if (!Capacitor.isNativePlatform()) {
+      setError("Request filtering runs in the installed Android app. Open Piko Browser from the Android APK to use it.");
+      return;
+    }
+    try {
+      await PrivacyBrowser.open({ url: selection.sourceUrl });
+    } catch (cause) {
+      setError(cause?.message || "Could not open the link in Piko Browser.");
+    }
+  }
 
   return <main className="music-tool-shell listen-refresh">
     <header className="tool-topbar">
@@ -88,9 +103,9 @@ export default function ListenPage() {
       </section>
 
       {selection ? <section className="embed-card listen-embed-card" aria-label={`${selection.provider} music player`}>
-        <div className="embed-heading"><div><p className="eyebrow">NOW IN PIKO BEATS</p><h2>{selection.provider}</h2><span className="listen-source-url">{selection.sourceUrl}</span></div><a href={selection.sourceUrl} target="_blank" rel="noopener noreferrer">Open source ↗</a></div>
+        <div className="embed-heading"><div><p className="eyebrow">NOW IN PIKO BEATS</p><h2>{selection.provider}</h2><span className="listen-source-url">{selection.sourceUrl}</span></div><div className="listen-embed-actions"><button type="button" className="primary-button" onClick={openInFilteredBrowser}>Open in Piko Browser <span>↗</span></button><a href={selection.sourceUrl} target="_blank" rel="noopener noreferrer">Open source ↗</a></div></div>
         <iframe key={selection.embedUrl} title={`${selection.provider} embedded music player`} src={selection.embedUrl} height={selection.height || 315} loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-        <p className="embed-disclaimer">The provider controls playback, sign-in, and ads. The browser ad filter does not apply inside this embedded player, and YouTube Music ads cannot be reliably blocked by a WebView filter. Use <Link href="/browser">Piko Browser</Link> for supported browser filtering; it still cannot guarantee removal of YouTube-served ads.</p>
+        <p className="embed-disclaimer">The embedded player does not use Piko’s request filter. Open this source in Piko Browser to apply its filter lists to eligible network requests. YouTube can serve ads from the same infrastructure as music, so ad removal is not guaranteed.</p>
       </section> : <section className="listen-provider-grid" aria-label="Supported music services">
         <article className="listen-provider-card listen-youtube"><span className="listen-provider-symbol">▶</span><span className="listen-card-kicker">VIDEO + PLAYLISTS</span><h2>YouTube Music</h2><p>Paste a music video or playlist URL to load the official YouTube player.</p><div className="listen-provider-actions"><button type="button" onClick={() => { setInput(""); document.getElementById("music-url")?.focus(); }}>Paste a link <span>→</span></button><a href="https://music.youtube.com/" target="_blank" rel="noopener noreferrer">Open service ↗</a></div></article>
         <article className="listen-provider-card listen-spotify"><span className="listen-provider-symbol">◉</span><span className="listen-card-kicker">TRACKS + ALBUMS</span><h2>Spotify</h2><p>Open supported track, album, artist, show, episode, and playlist embeds.</p><div className="listen-provider-actions"><button type="button" onClick={() => { setInput(""); document.getElementById("music-url")?.focus(); }}>Paste a link <span>→</span></button><a href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Open service ↗</a></div></article>
