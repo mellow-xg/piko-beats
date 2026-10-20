@@ -42,10 +42,18 @@ const copyTemplate = async (templateName, outputName) => {
 };
 
 await copyTemplate("MainActivity.java.template", "MainActivity.java");
+await copyTemplate("PikoBeatsApplication.java.template", "PikoBeatsApplication.java");
 await copyTemplate("PrivacyBrowserPlugin.java.template", "PrivacyBrowserPlugin.java");
 await copyTemplate("PrivacyBrowserActivity.java.template", "PrivacyBrowserActivity.java");
 
 let manifest = await readFile(manifestPath, "utf8");
+// Initialize AdblockAndroid once for the entire app process before any WebView uses it.
+const applicationTag = /<application\\b[^>]*>/;
+if (!applicationTag.test(manifest)) throw new Error("Could not locate application tag in AndroidManifest.xml.");
+if (!/android:name="[^"]*PikoBeatsApplication"/.test(manifest)) {
+  manifest = manifest.replace(applicationTag, (match) => match.replace(/\\s+android:name="[^"]*"/, "") .replace(/>$/, ' android:name=".PikoBeatsApplication">'));
+  await writeFile(manifestPath, manifest, "utf8");
+}
 if (!manifest.includes(".PrivacyBrowserActivity")) {
   const applicationTag = /<application\b[^>]*>/;
   if (!applicationTag.test(manifest)) throw new Error("Could not locate application tag in AndroidManifest.xml.");
