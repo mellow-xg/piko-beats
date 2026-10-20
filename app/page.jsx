@@ -101,6 +101,14 @@ export default function Home() {
             <div className="hero-art"><div className="orbit orbit-a" /><div className="orbit orbit-b" /><div className="hero-disc"><span>p</span></div><div className="floating-note note-a">♪</div><div className="floating-note note-b">♫</div></div>
           </section>}
 
+          {activeTab === "Home" && <section className="online-hub-card">
+            <div className="online-hub-art" aria-hidden="true"><span>♫</span><i /><b /></div>
+            <div className="online-hub-copy"><p className="eyebrow">FEATURED · LISTEN ONLINE</p><h2>Your music services.<br /><em>One listening hub.</em></h2><p>Load official players, reopen recent links, or use Piko Browser with request filtering where supported.</p>
+              <div className="online-hub-features"><span>▶ YouTube Music</span><span>◉ Spotify</span><span>☁ SoundCloud</span><span>◈ Filtered browser</span></div>
+              <div className="online-hub-actions"><Link href="/listen" className="primary-button">Open Listen Online <span>→</span></Link><Link href="/browser" className="online-hub-secondary">Piko Browser ↗</Link><Link href="/queue" className="online-hub-secondary">Save for later ↗</Link></div>
+            </div>
+          </section>}
+
           {activeTab === "Home" && <section className="section-block"><div className="section-heading"><div><p className="eyebrow">MADE FOR YOUR MOMENT</p><h2>Pick your mood</h2></div><button className="text-button" onClick={() => setActiveTab("Search")}>Explore all <span>↗</span></button></div><div className="mix-grid">{mixes.map((mix) => <button key={mix.title} className={`mix-card ${mix.color}`} onClick={() => { setQuery(mix.title === "Deep Focus" ? "Lo-fi" : mix.title === "On the Move" ? "Electronic" : "Chill"); setActiveTab("Search"); }}><span className="mix-icon">{mix.icon}</span><span className="mix-title">{mix.title}</span><span className="mix-subtitle">{mix.subtitle}</span><span className="mix-play">▶</span></button>)}</div></section>}
 
           <section className="section-block track-section"><div className="section-heading"><div><p className="eyebrow">{query ? "SEARCH RESULTS" : activeTab === "Liked Songs" ? "YOUR COLLECTION" : "HANDPICKED FOR YOU"}</p><h2>{query ? "Matching tracks" : activeTab === "Liked Songs" ? "Liked songs" : activeTab === "Your Library" ? "Recently played" : "Made to be replayed"}</h2></div><span className="track-total">{(activeTab === "Liked Songs" ? visibleTracks.filter((track) => liked.includes(track.id)) : visibleTracks).length} TRACKS</span></div>
