@@ -146,7 +146,7 @@ public class PrivacyBrowserActivity extends Activity {
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 address.setText(url);
                 adFilter.performScript(view, url);
-                status.setText("Request filtering enabled · some YouTube Music ads may still appear");
+                status.setText("AdGuard filters active · ads served by YouTube may still appear");
             }
 
             @Override
@@ -186,7 +186,7 @@ public class PrivacyBrowserActivity extends Activity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
 
         status = new TextView(this);
-        status.setText("Request filtering enabled · filter lists update in the background");
+        status.setText("Preparing filter lists… first-time setup downloads rules in the background.");
         status.setTextColor(MUTED);
         status.setTextSize(10);
         status.setPadding(dp(12), dp(7), dp(12), dp(7));
@@ -199,7 +199,7 @@ public class PrivacyBrowserActivity extends Activity {
         // Clear WebView's resource cache so a manual reload can use the updated rules.
         adFilter.getViewModel().getOnDirty().observe(this, ignored -> {
             if (webView != null) webView.clearCache(false);
-            if (status != null) status.setText("Filter rules updated. Refresh this page to apply them.");
+            if (status != null) status.setText("Filter rules updated. Refresh the page to apply the latest rules.");
         });
 
         address.setOnEditorActionListener((view, actionId, event) -> {
@@ -236,9 +236,14 @@ public class PrivacyBrowserActivity extends Activity {
             "AdGuard Tracking Protection",
             "https://filters.adtidy.org/extension/chromium/filters/3.txt"
         );
+        Filter annoyances = viewModel.addFilter(
+            "AdGuard Annoyances",
+            "https://filters.adtidy.org/extension/chromium/filters/14.txt"
+        );
         viewModel.download(base.getId());
         viewModel.download(privacy.getId());
         viewModel.download(tracking.getId());
+        viewModel.download(annoyances.getId());
     }
 
     private void loadAddress() {
