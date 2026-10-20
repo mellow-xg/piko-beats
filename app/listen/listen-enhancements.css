@@ -44,3 +44,12 @@
 .listen-main-cta{min-height:46px;box-shadow:0 8px 26px #9c7aef55}
 .listen-queue-banner .primary-button{min-height:43px}
 @media(max-width:620px){.listen-provider-card .listen-provider-actions{gap:10px}.listen-provider-card .listen-provider-actions a{min-height:38px}.listen-main-cta{justify-content:center}}
+
+
+/* Clearer filtered-playback action for the selected online source. */
+.listen-embed-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.listen-embed-actions .primary-button{white-space:nowrap;text-decoration:none;min-height:40px}
+.listen-embed-actions>a{color:#c7b5ff;text-decoration:none;font-size:10px;white-space:nowrap}
+.listen-embed-actions>a:hover{text-decoration:underline}
+.listen-embed-card .embed-disclaimer{padding:12px 14px;border:1px solid #a78bfa22;border-radius:10px;background:#a78bfa08}
+@media(max-width:620px){.listen-embed-actions{width:100%;justify-content:flex-start;margin-top:12px}.listen-embed-actions .primary-button{flex:1;justify-content:center}.listen-embed-card .embed-heading{align-items:flex-start;flex-direction:column}}
