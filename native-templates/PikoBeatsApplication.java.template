@@ -1,0 +1,13 @@
+package __PACKAGE__;
+
+import android.app.Application;
+import io.github.edsuns.adfilter.AdFilter;
+
+public class PikoBeatsApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // The library documentation requires a process-level initialization before AdFilter.get().
+        AdFilter.Companion.create(this);
+    }
+}
