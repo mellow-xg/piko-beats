@@ -48,10 +48,10 @@ await copyTemplate("PrivacyBrowserActivity.java.template", "PrivacyBrowserActivi
 
 let manifest = await readFile(manifestPath, "utf8");
 // Initialize AdblockAndroid once for the entire app process before any WebView uses it.
-const applicationTag = /<application\\b[^>]*>/;
+const applicationTag = /<application\b[^>]*>/;
 if (!applicationTag.test(manifest)) throw new Error("Could not locate application tag in AndroidManifest.xml.");
 if (!/android:name="[^"]*PikoBeatsApplication"/.test(manifest)) {
-  manifest = manifest.replace(applicationTag, (match) => match.replace(/\\s+android:name="[^"]*"/, "") .replace(/>$/, ' android:name=".PikoBeatsApplication">'));
+  manifest = manifest.replace(applicationTag, (match) => match.replace(/\s+android:name="[^"]*"/, "") .replace(/>$/, ' android:name=".PikoBeatsApplication">'));
   await writeFile(manifestPath, manifest, "utf8");
 }
 if (!manifest.includes(".PrivacyBrowserActivity")) {
