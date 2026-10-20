@@ -195,13 +195,6 @@ public class PrivacyBrowserActivity extends Activity {
 
         setContentView(root);
 
-        // AdblockAndroid signals when downloaded/installed filter data changes.
-        // Clear WebView's resource cache so a manual reload can use the updated rules.
-        adFilter.getViewModel().getOnDirty().observe(this, ignored -> {
-            if (webView != null) webView.clearCache(false);
-            if (status != null) status.setText("Filter rules updated. Refresh the page to apply the latest rules.");
-        });
-
         address.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO ||
                 (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
