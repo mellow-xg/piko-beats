@@ -45,7 +45,10 @@ export default function ListenPage() {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    try { setRecent(JSON.parse(localStorage.getItem(recentKey) || "[]").slice(0, 4)); } catch { setRecent([]); }
+    const timer = window.setTimeout(() => {
+      try { setRecent(JSON.parse(localStorage.getItem(recentKey) || "[]").slice(0, 4)); } catch { setRecent([]); }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function loadLink(event) {
@@ -59,7 +62,7 @@ export default function ListenPage() {
     try { localStorage.setItem(recentKey, JSON.stringify(next)); } catch {}
   }
 
-  function useRecent(item) { setInput(item.sourceUrl); setError(""); inputRef.current?.focus(); }
+  function handleRecentClick(item) { setInput(item.sourceUrl); setError(""); inputRef.current?.focus(); }
 
   async function openInFilteredBrowser() {
     if (!selection) return;
@@ -112,7 +115,7 @@ export default function ListenPage() {
         <article className="listen-provider-card listen-soundcloud"><span className="listen-provider-symbol">☁</span><span className="listen-card-kicker">INDEPENDENT MUSIC</span><h2>SoundCloud</h2><p>Load tracks and playlists through the official SoundCloud player.</p><div className="listen-provider-actions"><button type="button" onClick={() => { setInput(""); document.getElementById("music-url")?.focus(); }}>Paste a link <span>→</span></button><a href="https://soundcloud.com/" target="_blank" rel="noopener noreferrer">Open service ↗</a></div></article>
       </section>}
 
-      {recent.length > 0 && <section className="listen-recent"><div className="listen-section-heading"><div><p className="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recent links</h2></div><button className="listen-clear" type="button" onClick={() => { setRecent([]); try { localStorage.removeItem(recentKey); } catch {} }}>Clear history</button></div><div className="listen-recent-list">{recent.map((item) => <button key={item.sourceUrl} type="button" className="listen-recent-item" onClick={() => useRecent(item)}><span className="recent-play">▶</span><span><strong>{item.provider}</strong><small>{item.sourceUrl}</small></span><b>Use link ↗</b></button>)}</div></section>}
+      {recent.length > 0 && <section className="listen-recent"><div className="listen-section-heading"><div><p className="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recent links</h2></div><button className="listen-clear" type="button" onClick={() => { setRecent([]); try { localStorage.removeItem(recentKey); } catch {} }}>Clear history</button></div><div className="listen-recent-list">{recent.map((item) => <button key={item.sourceUrl} type="button" className="listen-recent-item" onClick={() => handleRecentClick(item)}><span className="recent-play">▶</span><span><strong>{item.provider}</strong><small>{item.sourceUrl}</small></span><b>Use link ↗</b></button>)}</div></section>}
 
       <section className="listen-queue-banner"><div className="queue-banner-icon">☁</div><div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Save a playlist for later</h2><p>Add supported playlist links to your private queue. Your Windows PC can pick up queued metadata tasks when it is online.</p></div><Link href="/queue" className="primary-button">Open my queue <span>→</span></Link></section>
       <p className="listen-footnote">Piko Beats uses official provider players. Playback and availability may depend on your region, account, or provider settings.</p>
